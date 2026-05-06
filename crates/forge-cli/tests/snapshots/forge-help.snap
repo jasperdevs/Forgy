@@ -1,0 +1,29 @@
+A beautiful, fast, terminal-native media toolkit.
+
+Usage: forge [OPTIONS] <COMMAND>
+
+Commands:
+  inspect     Show duration, codecs, tracks, metadata, size, and recommended actions.
+  convert     Convert media to another common format.
+  compress    Shrink videos, images, or folders with sensible ffmpeg defaults.
+  clip        Cut a time range or remove silence.
+  resize      Resize video or images by width, height, or creator preset.
+  crop        Crop to common aspect ratios such as 9:16, 1:1, or 16:9.
+  captions    Attach or burn caption files.
+  transcribe  Create transcripts through the local provider abstraction.
+  thumbnail   Extract a still, grid, or best-frame thumbnail.
+  audio       Normalize, clean, silence-trim, or extract audio.
+  youtube     Wrap yt-dlp with Forgy output folders and reporting.
+  batch       Run common operations across a folder.
+  preset      List, show, or scaffold creator presets.
+  notes       Generate local-provider-ready notes from media or transcripts.
+  doctor      Check ffmpeg, ffprobe, yt-dlp, transcription, hardware, and output permissions.
+  help        Print this message or the help of the given subcommand(s)
+
+Options:
+      --json             Print machine-readable JSON.
+      --dry-run          Plan work without running media commands.
+      --yes              Skip overwrite prompts and assume yes.
+      --output <OUTPUT>  Output root folder. [default: forge-output]
+  -h, --help             Print help
+  -V, --version          Print version

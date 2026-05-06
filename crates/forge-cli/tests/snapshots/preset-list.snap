@@ -1,0 +1,10 @@
+tiktok         Vertical creator export for TikTok.
+reels          Vertical Instagram Reels export.
+social         General vertical social export.
+youtube        Standard YouTube upload.
+youtube-short  YouTube Shorts vertical export.
+podcast        Clean spoken-word audio.
+lecture        Readable screen recording or class capture.
+discord        Small file export for chat sharing.
+web            Web-friendly MP4/WebP defaults.
+archive        Conservative archival remux/copy preference.

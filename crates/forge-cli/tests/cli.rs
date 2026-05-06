@@ -47,11 +47,29 @@ fn make_sample(dir: &Path) -> PathBuf {
     sample
 }
 
+fn normalize_output(value: &[u8]) -> String {
+    String::from_utf8_lossy(value)
+        .replace("\r\n", "\n")
+        .replace("forge.exe", "forge")
+}
+
+fn assert_snapshot(name: &str, actual: &str) {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests")
+        .join("snapshots")
+        .join(name);
+    let expected = fs::read_to_string(&path).unwrap_or_else(|err| {
+        panic!("failed to read snapshot {}: {err}", path.display());
+    });
+    assert_eq!(actual, expected, "snapshot changed: {}", path.display());
+}
+
 #[test]
 fn help_snapshot_mentions_core_commands() {
     let output = Command::new(forge()).arg("--help").output().unwrap();
     assert!(output.status.success());
-    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stdout = normalize_output(&output.stdout);
+    assert_snapshot("forge-help.snap", &stdout);
     assert!(stdout.contains("terminal-native media toolkit"));
     assert!(stdout.contains("Convert media to another common format"));
     assert!(stdout.contains("Wrap yt-dlp with Forgy output folders"));
@@ -127,7 +145,8 @@ fn preset_snapshot_lists_creator_presets() {
         .output()
         .unwrap();
     assert!(output.status.success());
-    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stdout = normalize_output(&output.stdout);
+    assert_snapshot("preset-list.snap", &stdout);
     assert!(stdout.contains("tiktok"));
     assert!(stdout.contains("youtube-short"));
     assert!(stdout.contains("podcast"));
