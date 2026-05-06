@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.asset }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset: forge-linux-x64
+            binary: forge
+            archive: tar
+          - os: windows-latest
+            asset: forge-windows-x64
+            binary: forge.exe
+            archive: zip
+          - os: macos-13
+            asset: forge-macos-x64
+            binary: forge
+            archive: tar
+          - os: macos-latest
+            asset: forge-macos-arm64
+            binary: forge
+            archive: tar
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build
+        run: cargo build --release --workspace
+      - name: Stage binary
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist/${{ matrix.asset }} | Out-Null
+          Copy-Item target/release/${{ matrix.binary }} dist/${{ matrix.asset }}/${{ matrix.binary }}
+          Copy-Item README.md dist/${{ matrix.asset }}/README.md
+          Copy-Item LICENSE dist/${{ matrix.asset }}/LICENSE
+      - name: Archive tar
+        if: matrix.archive == 'tar'
+        run: tar -czf dist/${{ matrix.asset }}.tar.gz -C dist/${{ matrix.asset }} .
+      - name: Archive zip
+        if: matrix.archive == 'zip'
+        shell: pwsh
+        run: Compress-Archive -Path dist/${{ matrix.asset }}/* -DestinationPath dist/${{ matrix.asset }}.zip
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: |
+            dist/${{ matrix.asset }}.tar.gz
+            dist/${{ matrix.asset }}.zip
+          if-no-files-found: ignore
+
+  publish:
+    name: Publish GitHub release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*

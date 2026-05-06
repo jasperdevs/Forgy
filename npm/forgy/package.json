@@ -1,0 +1,37 @@
+{
+  "name": "forgy",
+  "version": "0.1.0",
+  "description": "A fast, terminal-native media toolkit. Installs the Rust forge CLI.",
+  "license": "MIT",
+  "homepage": "https://github.com/jasperdevs/Forgy",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jasperdevs/Forgy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jasperdevs/Forgy/issues"
+  },
+  "keywords": [
+    "ffmpeg",
+    "media",
+    "video",
+    "audio",
+    "cli",
+    "youtube",
+    "transcription"
+  ],
+  "bin": {
+    "forge": "bin/forge.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/install.js"
+  },
+  "files": [
+    "bin",
+    "scripts",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

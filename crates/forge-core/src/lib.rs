@@ -149,14 +149,55 @@ pub fn prepare_job_dir(root: &Path, job_name: &str) -> Result<Utf8PathBuf> {
 }
 
 pub fn safe_output_path(job_dir: &Path, input: &Path, extension: &str) -> Result<Utf8PathBuf> {
-    let stem = input
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .filter(|s| !s.is_empty())
-        .unwrap_or("output");
-    let filename = format!("{}.{}", slug(stem), extension.trim_start_matches('.'));
+    let stem = input_stem(input.to_string_lossy().as_ref());
+    let filename = format!("{}.{}", stem, extension.trim_start_matches('.'));
     let path = next_available_path(&job_dir.join(filename));
     Utf8PathBuf::from_path_buf(path).map_err(|p| anyhow::anyhow!("non-utf8 path {}", p.display()))
+}
+
+pub fn safe_output_path_for_source(
+    job_dir: &Path,
+    source: &str,
+    extension: &str,
+) -> Result<Utf8PathBuf> {
+    let stem = input_stem(source);
+    let filename = format!("{}.{}", stem, extension.trim_start_matches('.'));
+    let path = next_available_path(&job_dir.join(filename));
+    Utf8PathBuf::from_path_buf(path).map_err(|p| anyhow::anyhow!("non-utf8 path {}", p.display()))
+}
+
+pub fn input_stem(source: &str) -> String {
+    let clean = source
+        .split(['?', '#'])
+        .next()
+        .unwrap_or(source)
+        .trim_end_matches(['/', '\\']);
+    let segment = clean
+        .rsplit(['/', '\\'])
+        .next()
+        .filter(|s| !s.is_empty())
+        .unwrap_or("output");
+    let stem = segment
+        .rsplit_once('.')
+        .map(|(stem, _)| stem)
+        .unwrap_or(segment);
+    slug(stem)
+}
+
+pub fn input_extension(source: &str, fallback: &str) -> String {
+    let clean = source
+        .split(['?', '#'])
+        .next()
+        .unwrap_or(source)
+        .trim_end_matches(['/', '\\']);
+    let segment = clean.rsplit(['/', '\\']).next().unwrap_or(clean);
+    segment
+        .rsplit_once('.')
+        .map(|(_, ext)| ext)
+        .filter(|ext| !ext.is_empty())
+        .unwrap_or(fallback)
+        .trim_start_matches('.')
+        .to_ascii_lowercase()
 }
 
 pub fn next_available_path(path: &Path) -> PathBuf {
@@ -275,5 +316,26 @@ impl IfEmpty for String {
         } else {
             self
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{input_extension, input_stem};
+
+    #[test]
+    fn url_sources_have_stable_names() {
+        assert_eq!(
+            input_stem("https://cdn.example.com/media/Launch Clip.mp4?token=abc"),
+            "launch-clip"
+        );
+        assert_eq!(
+            input_extension(
+                "https://cdn.example.com/media/Launch Clip.mp4?token=abc",
+                "bin"
+            ),
+            "mp4"
+        );
+        assert_eq!(input_stem("https://cdn.example.com/media/"), "media");
     }
 }

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/logo.svg" alt="Forgy logo" height="170">
+  <img src="./assets/logo-imagegen.png" alt="Forgy logo" height="170">
 </p>
 
 <h1 align="center">Forgy</h1>
@@ -73,6 +73,7 @@ Then run the media job directly:
 
 ```sh
 forge inspect video.mp4
+forge thumbnail "https://example.com/video.mp4" --at 00:00:15
 forge resize video.mp4 --preset youtube-short
 forge captions video.mp4 --srt captions.srt --burn --style shorts
 forge audio podcast.wav --normalize --clean
@@ -86,6 +87,8 @@ forge inspect video.mp4 --json
 forge compress video.mp4 --target 25mb --dry-run
 forge convert input.wav --to mp3 --json --yes
 ```
+
+Local paths and direct media URLs are interchangeable for `ffmpeg`/`ffprobe` backed commands when the backend can read the URL. Use `forge youtube <url>` for YouTube-style pages that need `yt-dlp`.
 
 ## Commands
 
@@ -149,15 +152,6 @@ scripts/benchmark-real-ops.ps1 -Network
 ```
 
 Latest measured results are in [docs/benchmark-results.md](docs/benchmark-results.md).
-
-## Project notes
-
-- [Design notes](docs/design-notes.md)
-- [Preset docs](docs/presets.md)
-- [Competitor comparison](docs/comparison.md)
-- [Performance checks](docs/performance.md)
-- [Roadmap](docs/roadmap.md)
-- [Examples](examples)
 
 ## Development
 

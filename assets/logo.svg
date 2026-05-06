@@ -1,8 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
   <title id="title">Forgy logo</title>
-  <desc id="desc">A monochrome terminal prompt and media mark for the Forge CLI.</desc>
+  <desc id="desc">A monochrome faceted forge and media mark for the Forge CLI.</desc>
   <rect x="3" y="3" width="250" height="250" rx="46" fill="#000" stroke="#fff" stroke-opacity=".18" stroke-width="6"/>
-  <path d="M76 72l76 56-76 56" fill="none" stroke="#fff" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M142 184h46" fill="none" stroke="#fff" stroke-width="36" stroke-linecap="round"/>
-  <path fill="#000" d="M94 104l32 24-32 24z"/>
+  <path fill="#fff" d="M128 42l76 43v86l-76 43-76-43V85l76-43z"/>
+  <path fill="#000" d="M112 89l62 39-62 39z"/>
+  <path fill="#000" opacity=".22" d="M128 42l76 43-76 43-76-43 76-43z"/>
+  <path fill="#000" opacity=".22" d="M52 171l76-43v86l-76-43z"/>
 </svg>

@@ -14,7 +14,10 @@ use camino::{Utf8Path, Utf8PathBuf};
 use chrono::Utc;
 use clap::{Args, Parser, Subcommand};
 use console::style;
-use forge_core::{ForgeReport, JobPlan, RunOptions, dir_size};
+use forge_core::{
+    ForgeReport, JobPlan, RunOptions, dir_size, input_extension, input_stem,
+    safe_output_path_for_source,
+};
 use forge_media::PlanRequest;
 use forge_transcribe::{MockProvider, NotesProvider, NotesRequest, TranscriptionProvider};
 use indicatif::{ProgressBar, ProgressStyle};
@@ -512,11 +515,9 @@ fn captions(args: CaptionsArgs, run: &RunOptions, cancelled: Arc<AtomicBool>) ->
         "captions",
         forge_core::prepare_job_dir(Path::new(run.output_root.as_str()), "captions")?,
     );
-    let output = forge_core::safe_output_path(
-        Path::new(plan.job_dir.as_str()),
-        args.input.as_std_path(),
-        args.input.extension().unwrap_or("mp4"),
-    )?;
+    let ext = input_extension(args.input.as_str(), "mp4");
+    let output =
+        safe_output_path_for_source(Path::new(plan.job_dir.as_str()), args.input.as_str(), &ext)?;
     let subtitle_filter = if args.burn {
         format!("subtitles='{}'", ffmpeg_filter_path(&source))
     } else {
@@ -555,7 +556,7 @@ fn transcribe(input: Utf8PathBuf, srt: bool, recursive: bool, run: &RunOptions) 
     let mut outputs = Vec::new();
     for file in &files {
         let transcript = provider.transcribe(file, srt)?;
-        let stem = file.file_stem().unwrap_or("transcript");
+        let stem = input_stem(file.as_str());
         let txt = job_dir.join(format!("{stem}.txt"));
         fs::write(&txt, transcript.text)?;
         outputs.push(txt);
@@ -701,7 +702,7 @@ fn notes(input: Utf8PathBuf, chapters: bool, summary: bool, run: &RunOptions) ->
     let timer = Instant::now();
     let size_before = fs::metadata(&input).map(|meta| meta.len()).unwrap_or(0);
     let job_dir = forge_core::prepare_job_dir(Path::new(run.output_root.as_str()), "notes")?;
-    let output = job_dir.join(format!("{}-notes.md", input.file_stem().unwrap_or("media")));
+    let output = job_dir.join(format!("{}-notes.md", input_stem(input.as_str())));
     let provider = MockProvider;
     let document = provider.notes(NotesRequest {
         source: input.to_string(),

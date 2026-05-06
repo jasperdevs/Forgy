@@ -7,7 +7,8 @@ use std::{
 use anyhow::{Context, Result, bail};
 use camino::Utf8Path;
 use forge_core::{
-    CommandSpec, JobPlan, MediaInfo, RunOptions, format_duration, prepare_job_dir, safe_output_path,
+    CommandSpec, JobPlan, MediaInfo, RunOptions, format_duration, input_extension, prepare_job_dir,
+    safe_output_path_for_source,
 };
 use serde_json::Value;
 
@@ -118,7 +119,8 @@ pub fn inspect_path(path: &Utf8Path) -> Result<MediaInfo> {
 
 pub fn plan_convert(request: PlanRequest<'_>, to: &str) -> Result<JobPlan> {
     let job_dir = prepare_job_dir(Path::new(request.run.output_root.as_str()), "convert")?;
-    let output = safe_output_path(Path::new(job_dir.as_str()), request.input.as_std_path(), to)?;
+    let output =
+        safe_output_path_for_source(Path::new(job_dir.as_str()), request.input.as_str(), to)?;
     let mut args = vec![
         "-hide_banner".to_string(),
         "-y".to_string(),
@@ -159,12 +161,9 @@ pub fn plan_compress(
     quality: Option<u8>,
 ) -> Result<JobPlan> {
     let job_dir = prepare_job_dir(Path::new(request.run.output_root.as_str()), "compress")?;
-    let ext = request.input.extension().unwrap_or("mp4");
-    let output = safe_output_path(
-        Path::new(job_dir.as_str()),
-        request.input.as_std_path(),
-        ext,
-    )?;
+    let ext = input_extension(request.input.as_str(), "mp4");
+    let output =
+        safe_output_path_for_source(Path::new(job_dir.as_str()), request.input.as_str(), &ext)?;
     let mut args = vec![
         "-hide_banner".to_string(),
         "-y".to_string(),
@@ -235,12 +234,9 @@ pub fn plan_clip(
     remove_silence: bool,
 ) -> Result<JobPlan> {
     let job_dir = prepare_job_dir(Path::new(request.run.output_root.as_str()), "clip")?;
-    let ext = request.input.extension().unwrap_or("mp4");
-    let output = safe_output_path(
-        Path::new(job_dir.as_str()),
-        request.input.as_std_path(),
-        ext,
-    )?;
+    let ext = input_extension(request.input.as_str(), "mp4");
+    let output =
+        safe_output_path_for_source(Path::new(job_dir.as_str()), request.input.as_str(), &ext)?;
     let (from, to) = parse_range(from, to, range);
     let mut args = vec!["-hide_banner".to_string(), "-y".to_string()];
     if let Some(from) = from.as_deref() {
@@ -291,12 +287,9 @@ pub fn plan_resize(
         }
     }
     let job_dir = prepare_job_dir(Path::new(request.run.output_root.as_str()), "resize")?;
-    let ext = request.input.extension().unwrap_or("mp4");
-    let output = safe_output_path(
-        Path::new(job_dir.as_str()),
-        request.input.as_std_path(),
-        ext,
-    )?;
+    let ext = input_extension(request.input.as_str(), "mp4");
+    let output =
+        safe_output_path_for_source(Path::new(job_dir.as_str()), request.input.as_str(), &ext)?;
     let scale = match (width, height) {
         (Some(w), Some(h)) => format!("scale={w}:{h}"),
         (Some(w), None) => format!("scale={w}:-2"),
@@ -322,12 +315,9 @@ pub fn plan_resize(
 
 pub fn plan_crop(request: PlanRequest<'_>, aspect: &str) -> Result<JobPlan> {
     let job_dir = prepare_job_dir(Path::new(request.run.output_root.as_str()), "crop")?;
-    let ext = request.input.extension().unwrap_or("mp4");
-    let output = safe_output_path(
-        Path::new(job_dir.as_str()),
-        request.input.as_std_path(),
-        ext,
-    )?;
+    let ext = input_extension(request.input.as_str(), "mp4");
+    let output =
+        safe_output_path_for_source(Path::new(job_dir.as_str()), request.input.as_str(), &ext)?;
     let filter = crop_filter(aspect)?;
     let mut plan = JobPlan::new("crop", job_dir);
     plan.operations.push(format!("crop to {aspect}"));
@@ -353,11 +343,8 @@ pub fn plan_thumbnail(
     best_frame: bool,
 ) -> Result<JobPlan> {
     let job_dir = prepare_job_dir(Path::new(request.run.output_root.as_str()), "thumbnail")?;
-    let output = safe_output_path(
-        Path::new(job_dir.as_str()),
-        request.input.as_std_path(),
-        "jpg",
-    )?;
+    let output =
+        safe_output_path_for_source(Path::new(job_dir.as_str()), request.input.as_str(), "jpg")?;
     let mut args = vec!["-hide_banner".to_string(), "-y".to_string()];
     if let Some(at) = at {
         args.extend(["-ss".to_string(), at.to_string()]);
@@ -410,15 +397,13 @@ pub fn plan_audio(
     extract: bool,
 ) -> Result<JobPlan> {
     let job_dir = prepare_job_dir(Path::new(request.run.output_root.as_str()), "audio")?;
-    let output = safe_output_path(
-        Path::new(job_dir.as_str()),
-        request.input.as_std_path(),
-        if extract {
-            "mp3"
-        } else {
-            request.input.extension().unwrap_or("mp3")
-        },
-    )?;
+    let ext = if extract {
+        "mp3".to_string()
+    } else {
+        input_extension(request.input.as_str(), "mp3")
+    };
+    let output =
+        safe_output_path_for_source(Path::new(job_dir.as_str()), request.input.as_str(), &ext)?;
     let mut filters = Vec::new();
     if normalize {
         filters.push("loudnorm");

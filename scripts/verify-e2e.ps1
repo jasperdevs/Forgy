@@ -116,6 +116,40 @@ try {
     Invoke-Step "notes summary" { & $Forge --output (Join-Path $Out "notes") notes (Join-Path $Fixtures "video.mp4") --chapters --summary | Out-Null }
 
     if ($Network) {
+        $directMediaUrl = "https://samplefile.com/samples/download/video/mp4/mp4_h264_aac_360p_sample.mp4/"
+        Invoke-Step "inspect direct media url" {
+            & $Forge --json inspect $directMediaUrl | Out-Null
+        }
+        Invoke-Step "convert direct media url" {
+            & $Forge --output (Join-Path $Out "url-convert") convert $directMediaUrl --to mp4 | Out-Null
+        }
+        Invoke-Step "compress direct media url" {
+            & $Forge --output (Join-Path $Out "url-compress") compress $directMediaUrl --target 1mb | Out-Null
+        }
+        Invoke-Step "clip direct media url" {
+            & $Forge --output (Join-Path $Out "url-clip") clip $directMediaUrl --range 00:00:00..00:00:01 | Out-Null
+        }
+        Invoke-Step "resize direct media url" {
+            & $Forge --output (Join-Path $Out "url-resize") resize $directMediaUrl --width 320 | Out-Null
+        }
+        Invoke-Step "crop direct media url" {
+            & $Forge --output (Join-Path $Out "url-crop") crop $directMediaUrl --aspect 1:1 | Out-Null
+        }
+        Invoke-Step "captions direct media url" {
+            & $Forge --output (Join-Path $Out "url-captions") captions $directMediaUrl --srt (Join-Path $Fixtures "captions.srt") --burn | Out-Null
+        }
+        Invoke-Step "transcribe direct media url" {
+            & $Forge --output (Join-Path $Out "url-transcribe") transcribe $directMediaUrl --srt | Out-Null
+        }
+        Invoke-Step "thumbnail direct media url" {
+            & $Forge --output (Join-Path $Out "url-thumb") thumbnail $directMediaUrl --at 00:00:01 | Out-Null
+        }
+        Invoke-Step "audio direct media url" {
+            & $Forge --output (Join-Path $Out "url-audio") audio $directMediaUrl --extract | Out-Null
+        }
+        Invoke-Step "notes direct media url" {
+            & $Forge --output (Join-Path $Out "url-notes") notes $directMediaUrl --chapters --summary | Out-Null
+        }
         Invoke-Step "youtube metadata simulate" {
             & $Forge --output (Join-Path $Out "youtube") youtube "https://archive.org/details/SampleVideo1280x7205mb" --metadata --simulate | Out-Null
         }
