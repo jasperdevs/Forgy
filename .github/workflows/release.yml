@@ -25,7 +25,7 @@ jobs:
             asset: forge-windows-x64
             binary: forge.exe
             archive: zip
-          - os: macos-13
+          - os: macos-15-intel
             asset: forge-macos-x64
             binary: forge
             archive: tar
