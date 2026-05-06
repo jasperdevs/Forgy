@@ -1,7 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
   <title id="title">Forgy logo</title>
-  <desc id="desc">A monochrome forged F mark for the Forge CLI.</desc>
+  <desc id="desc">A monochrome terminal prompt and media mark for the Forge CLI.</desc>
   <rect x="3" y="3" width="250" height="250" rx="46" fill="#000" stroke="#fff" stroke-opacity=".18" stroke-width="6"/>
-  <path fill="#fff" d="M70 55h119c8 0 14 6 14 14v18c0 8-6 14-14 14h-70v28h53c8 0 14 6 14 14v17c0 8-6 14-14 14h-53v28c0 8-6 14-14 14H84c-8 0-14-6-14-14V55z"/>
-  <path fill="#000" d="M116 125l42 25-42 25z"/>
+  <path d="M76 72l76 56-76 56" fill="none" stroke="#fff" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M142 184h46" fill="none" stroke="#fff" stroke-width="36" stroke-linecap="round"/>
+  <path fill="#000" d="M94 104l32 24-32 24z"/>
 </svg>
