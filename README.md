@@ -45,7 +45,14 @@ forge clip video.mp4 --range 00:01:00..00:02:30
 
 ## Install
 
-Forgy is currently installed from source.
+Install the Rust binary through npm:
+
+```sh
+npm install -g forgy
+forge doctor
+```
+
+Or build from source:
 
 ```sh
 git clone https://github.com/jasperdevs/Forgy
