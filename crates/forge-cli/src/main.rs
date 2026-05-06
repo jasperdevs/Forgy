@@ -19,6 +19,7 @@ use forge_media::PlanRequest;
 use forge_transcribe::{MockProvider, NotesProvider, NotesRequest, TranscriptionProvider};
 use indicatif::{ProgressBar, ProgressStyle};
 use serde::Serialize;
+use tracing::info;
 use tracing_subscriber::EnvFilter;
 
 #[derive(Parser)]
@@ -381,6 +382,14 @@ fn run_plan(
     run: &RunOptions,
     cancelled: Arc<AtomicBool>,
 ) -> Result<()> {
+    info!(
+        job = plan.job_name.as_str(),
+        commands = plan.commands.len(),
+        outputs = plan.outputs.len(),
+        dry_run = run.dry_run,
+        json = run.json,
+        "planned job"
+    );
     if run.json || run.dry_run {
         println!("{}", serde_json::to_string_pretty(&plan)?);
     } else {
@@ -402,13 +411,25 @@ fn run_plan(
         "{spinner:.green} {wide_msg} [{pos}/{len}]",
     )?);
     let mut commands_run = Vec::new();
+    let job_name = plan.job_name.clone();
     for command in &plan.commands {
         if cancelled.load(Ordering::SeqCst) {
             bail!("cancelled before running `{}`", command.display());
         }
-        pb.set_message(command.display());
+        let command_line = command.display();
+        info!(
+            job = job_name.as_str(),
+            command = %command_line,
+            "running command"
+        );
+        pb.set_message(command_line.clone());
         command.run()?;
-        commands_run.push(command.display());
+        info!(
+            job = job_name.as_str(),
+            command = %command_line,
+            "finished command"
+        );
+        commands_run.push(command_line);
         pb.inc(1);
     }
     pb.finish_with_message("done");
