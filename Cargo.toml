@@ -33,3 +33,8 @@ thiserror = "2.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 walkdir = "2.5"
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+strip = true
