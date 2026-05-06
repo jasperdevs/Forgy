@@ -8,5 +8,6 @@ description.workspace = true
 
 [dependencies]
 anyhow.workspace = true
+camino.workspace = true
 forge-core = { path = "../forge-core" }
 serde_json.workspace = true

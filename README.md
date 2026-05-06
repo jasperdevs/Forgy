@@ -1,5 +1,7 @@
 # Forgy
 
+[![CI](https://github.com/jasperdevs/Forgy/actions/workflows/ci.yml/badge.svg)](https://github.com/jasperdevs/Forgy/actions/workflows/ci.yml)
+
 ![Forgy logo](assets/logo.svg)
 
 Forge is a beautiful, fast, terminal-native media toolkit.
@@ -27,6 +29,25 @@ forge audio podcast.mp3 --normalize --clean
 forge youtube "https://www.youtube.com/watch?v=..." --audio --thumbnail
 forge batch ./videos --compress --target 100mb --recursive
 ```
+
+## Commands
+
+| Command | Job |
+| --- | --- |
+| `inspect` | Read duration, format, streams, bitrate, metadata, size, and recommendations. |
+| `convert` | Convert video, audio, or image formats through ffmpeg. |
+| `compress` | Target file size or quality for files and folders. |
+| `clip` | Cut ranges or remove silence. |
+| `resize` / `crop` | Creator-safe dimensions and aspect ratios. |
+| `captions` | Attach or burn subtitle files. |
+| `transcribe` | Provider-backed transcript workflow with no paid API requirement. |
+| `thumbnail` | Still, grid, or best-frame thumbnails. |
+| `audio` | Normalize, clean, silence-trim, or extract audio. |
+| `youtube` | yt-dlp downloads wrapped in Forgy output folders. |
+| `batch` | Folder processing for common operations. |
+| `preset` | Built-in creator export recipes. |
+| `notes` | Local-provider-ready notes from media/transcripts. |
+| `doctor` | Environment checks. |
 
 ## Output
 
@@ -73,6 +94,7 @@ Forgy has a provider abstraction for transcription and AI notes. The current imp
 - mock provider for tests and local workflows
 - external command provider
 - whisper.cpp provider placeholder
+- mock notes provider for local-provider-ready notes
 
 Paid APIs are not required.
 

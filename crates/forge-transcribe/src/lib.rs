@@ -18,6 +18,26 @@ pub trait TranscriptionProvider {
     fn transcribe(&self, input: &Utf8Path, srt: bool) -> Result<Transcript>;
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NotesRequest {
+    pub source: String,
+    pub chapters: bool,
+    pub summary: bool,
+    pub transcript: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NotesDocument {
+    pub markdown: String,
+    pub provider: String,
+}
+
+pub trait NotesProvider {
+    fn name(&self) -> &'static str;
+    fn available(&self) -> bool;
+    fn notes(&self, request: NotesRequest) -> Result<NotesDocument>;
+}
+
 pub struct MockProvider;
 
 impl TranscriptionProvider for MockProvider {
@@ -33,7 +53,28 @@ impl TranscriptionProvider for MockProvider {
         Ok(Transcript {
             text: format!("Mock transcript for {input}"),
             srt: srt.then(|| "1\n00:00:00,000 --> 00:00:01,000\nMock transcript.\n".to_string()),
-            provider: self.name().to_string(),
+            provider: TranscriptionProvider::name(self).to_string(),
+        })
+    }
+}
+
+impl NotesProvider for MockProvider {
+    fn name(&self) -> &'static str {
+        "mock"
+    }
+
+    fn available(&self) -> bool {
+        true
+    }
+
+    fn notes(&self, request: NotesRequest) -> Result<NotesDocument> {
+        let markdown = format!(
+            "# Notes for `{}`\n\nProvider: mock\nChapters: {}\nSummary: {}\n\nNo paid AI provider is required. Configure a local provider when ready.\n",
+            request.source, request.chapters, request.summary
+        );
+        Ok(NotesDocument {
+            markdown,
+            provider: NotesProvider::name(self).to_string(),
         })
     }
 }

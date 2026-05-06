@@ -1,12 +1,17 @@
 use std::fs;
 
 use anyhow::{Context, Result};
+use camino::Utf8Path;
 use forge_core::{ForgeReport, human_bytes};
 
 pub fn write_report(report: &ForgeReport) -> Result<()> {
     let Some(job_dir) = report.output_files.first().and_then(|p| p.parent()) else {
         return Ok(());
     };
+    write_report_to(job_dir, report)
+}
+
+pub fn write_report_to(job_dir: &Utf8Path, report: &ForgeReport) -> Result<()> {
     let json = job_dir.join("forge-report.json");
     let md = job_dir.join("forge-report.md");
     fs::write(&json, serde_json::to_string_pretty(report)?)

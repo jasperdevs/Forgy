@@ -51,9 +51,69 @@ fn help_snapshot_mentions_core_commands() {
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("terminal-native media toolkit"));
+    assert!(stdout.contains("Convert media to another common format"));
+    assert!(stdout.contains("Wrap yt-dlp with Forgy output folders"));
     assert!(stdout.contains("inspect"));
     assert!(stdout.contains("doctor"));
     assert!(stdout.contains("youtube"));
+}
+
+#[test]
+fn transcribe_and_notes_write_reports() {
+    if !have("ffmpeg") {
+        eprintln!("skipping media integration test because ffmpeg is unavailable");
+        return;
+    }
+    let dir = temp_dir("text-workflows");
+    let sample = dir.join("sample.wav");
+    let status = Command::new("ffmpeg")
+        .args([
+            "-hide_banner",
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            "sine=frequency=440:sample_rate=44100",
+            "-t",
+            "1",
+            sample.to_str().unwrap(),
+        ])
+        .status()
+        .unwrap();
+    assert!(status.success());
+
+    let transcribe_root = dir.join("transcribe-out");
+    let transcribe = Command::new(forge())
+        .args([
+            "--output",
+            transcribe_root.to_str().unwrap(),
+            "transcribe",
+            sample.to_str().unwrap(),
+            "--srt",
+        ])
+        .output()
+        .unwrap();
+    assert!(transcribe.status.success());
+    assert!(
+        transcribe_root
+            .join("transcribe")
+            .join("forge-report.json")
+            .exists()
+    );
+
+    let notes_root = dir.join("notes-out");
+    let notes = Command::new(forge())
+        .args([
+            "--output",
+            notes_root.to_str().unwrap(),
+            "notes",
+            sample.to_str().unwrap(),
+            "--summary",
+        ])
+        .output()
+        .unwrap();
+    assert!(notes.status.success());
+    assert!(notes_root.join("notes").join("forge-report.md").exists());
 }
 
 #[test]

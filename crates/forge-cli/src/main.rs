@@ -16,7 +16,7 @@ use clap::{Args, Parser, Subcommand};
 use console::style;
 use forge_core::{ForgeReport, JobPlan, RunOptions, dir_size};
 use forge_media::PlanRequest;
-use forge_transcribe::{MockProvider, TranscriptionProvider};
+use forge_transcribe::{MockProvider, NotesProvider, NotesRequest, TranscriptionProvider};
 use indicatif::{ProgressBar, ProgressStyle};
 use tracing_subscriber::EnvFilter;
 
@@ -50,14 +50,15 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    Inspect {
-        file: Utf8PathBuf,
-    },
+    #[command(about = "Show duration, codecs, tracks, metadata, size, and recommended actions.")]
+    Inspect { file: Utf8PathBuf },
+    #[command(about = "Convert media to another common format.")]
     Convert {
         input: Utf8PathBuf,
         #[arg(long)]
         to: String,
     },
+    #[command(about = "Shrink videos, images, or folders with sensible ffmpeg defaults.")]
     Compress {
         input: Utf8PathBuf,
         #[arg(long)]
@@ -67,6 +68,7 @@ enum Commands {
         #[arg(long)]
         recursive: bool,
     },
+    #[command(about = "Cut a time range or remove silence.")]
     Clip {
         input: Utf8PathBuf,
         #[arg(long)]
@@ -78,6 +80,7 @@ enum Commands {
         #[arg(long)]
         remove_silence: bool,
     },
+    #[command(about = "Resize video or images by width, height, or creator preset.")]
     Resize {
         input: Utf8PathBuf,
         #[arg(long)]
@@ -87,12 +90,15 @@ enum Commands {
         #[arg(long)]
         preset: Option<String>,
     },
+    #[command(about = "Crop to common aspect ratios such as 9:16, 1:1, or 16:9.")]
     Crop {
         input: Utf8PathBuf,
         #[arg(long)]
         aspect: String,
     },
+    #[command(about = "Attach or burn caption files.")]
     Captions(CaptionsArgs),
+    #[command(about = "Create transcripts through the local provider abstraction.")]
     Transcribe {
         input: Utf8PathBuf,
         #[arg(long)]
@@ -100,6 +106,7 @@ enum Commands {
         #[arg(long)]
         recursive: bool,
     },
+    #[command(about = "Extract a still, grid, or best-frame thumbnail.")]
     Thumbnail {
         input: Utf8PathBuf,
         #[arg(long)]
@@ -109,6 +116,7 @@ enum Commands {
         #[arg(long)]
         best_frame: bool,
     },
+    #[command(about = "Normalize, clean, silence-trim, or extract audio.")]
     Audio {
         input: Utf8PathBuf,
         #[arg(long)]
@@ -120,12 +128,16 @@ enum Commands {
         #[arg(long)]
         extract: bool,
     },
+    #[command(about = "Wrap yt-dlp with Forgy output folders and reporting.")]
     Youtube(YoutubeArgs),
+    #[command(about = "Run common operations across a folder.")]
     Batch(BatchArgs),
+    #[command(about = "List, show, or scaffold creator presets.")]
     Preset {
         #[command(subcommand)]
         command: PresetCommand,
     },
+    #[command(about = "Generate local-provider-ready notes from media or transcripts.")]
     Notes {
         input: Utf8PathBuf,
         #[arg(long)]
@@ -133,6 +145,9 @@ enum Commands {
         #[arg(long)]
         summary: bool,
     },
+    #[command(
+        about = "Check ffmpeg, ffprobe, yt-dlp, transcription, hardware, and output permissions."
+    )]
     Doctor,
 }
 
@@ -365,6 +380,7 @@ fn run_plan(
     }
     pb.finish_with_message("done");
     let size_after = dir_size(&plan.outputs);
+    let job_dir = plan.job_dir.clone();
     let report = ForgeReport {
         job_name: plan.job_name,
         started_at: started,
@@ -378,7 +394,7 @@ fn run_plan(
         quality_settings: Vec::new(),
         warnings: plan.warnings,
     };
-    forge_report::write_report(&report)?;
+    forge_report::write_report_to(&job_dir, &report)?;
     if run.json {
         println!("{}", serde_json::to_string_pretty(&report)?);
     } else {
@@ -472,15 +488,18 @@ fn captions(args: CaptionsArgs, run: &RunOptions, cancelled: Arc<AtomicBool>) ->
 }
 
 fn transcribe(input: Utf8PathBuf, srt: bool, recursive: bool, run: &RunOptions) -> Result<()> {
+    let started = Utc::now();
+    let timer = Instant::now();
     let files = if input.is_dir() || recursive {
         forge_batch::collect_media(input.as_str(), recursive)?
     } else {
         vec![input]
     };
+    let size_before = dir_size(&files);
     let provider = MockProvider;
     let job_dir = forge_core::prepare_job_dir(Path::new(run.output_root.as_str()), "transcribe")?;
     let mut outputs = Vec::new();
-    for file in files {
+    for file in &files {
         let transcript = provider.transcribe(&file, srt)?;
         let stem = file.file_stem().unwrap_or("transcript");
         let txt = job_dir.join(format!("{stem}.txt"));
@@ -492,6 +511,26 @@ fn transcribe(input: Utf8PathBuf, srt: bool, recursive: bool, run: &RunOptions) 
             outputs.push(srt_path);
         }
     }
+    let report = ForgeReport {
+        job_name: "transcribe".to_string(),
+        started_at: started,
+        duration_ms: timer.elapsed().as_millis(),
+        input_files: files,
+        output_files: outputs.clone(),
+        operations_performed: vec![format!(
+            "transcribe with {} provider",
+            TranscriptionProvider::name(&provider)
+        )],
+        commands_run: Vec::new(),
+        size_before_bytes: size_before,
+        size_after_bytes: dir_size(&outputs),
+        quality_settings: Vec::new(),
+        warnings: vec![
+            "mock provider output is for workflow testing; configure a real local provider for production transcripts"
+                .to_string(),
+        ],
+    };
+    forge_report::write_report_to(&job_dir, &report)?;
     if run.json {
         println!("{}", serde_json::to_string_pretty(&outputs)?);
     } else {
@@ -601,12 +640,39 @@ fn preset(command: PresetCommand, run: &RunOptions) -> Result<()> {
 }
 
 fn notes(input: Utf8PathBuf, chapters: bool, summary: bool, run: &RunOptions) -> Result<()> {
+    let started = Utc::now();
+    let timer = Instant::now();
+    let size_before = fs::metadata(&input).map(|meta| meta.len()).unwrap_or(0);
     let job_dir = forge_core::prepare_job_dir(Path::new(run.output_root.as_str()), "notes")?;
     let output = job_dir.join(format!("{}-notes.md", input.file_stem().unwrap_or("media")));
-    let body = format!(
-        "# Notes for `{input}`\n\nProvider: mock\nChapters: {chapters}\nSummary: {summary}\n\nNo paid AI provider is required. Configure a local provider when ready.\n"
-    );
-    fs::write(&output, body)?;
+    let provider = MockProvider;
+    let document = provider.notes(NotesRequest {
+        source: input.to_string(),
+        chapters,
+        summary,
+        transcript: None,
+    })?;
+    fs::write(&output, document.markdown)?;
+    let outputs = vec![output.clone()];
+    let report = ForgeReport {
+        job_name: "notes".to_string(),
+        started_at: started,
+        duration_ms: timer.elapsed().as_millis(),
+        input_files: vec![input],
+        output_files: outputs.clone(),
+        operations_performed: vec![format!(
+            "generate notes with {} provider",
+            NotesProvider::name(&provider)
+        )],
+        commands_run: Vec::new(),
+        size_before_bytes: size_before,
+        size_after_bytes: dir_size(&outputs),
+        quality_settings: Vec::new(),
+        warnings: vec![
+            "mock notes are placeholders until a local AI provider is configured".to_string(),
+        ],
+    };
+    forge_report::write_report_to(&job_dir, &report)?;
     if run.json {
         println!("{}", serde_json::to_string_pretty(&output)?);
     } else {
@@ -616,6 +682,7 @@ fn notes(input: Utf8PathBuf, chapters: bool, summary: bool, run: &RunOptions) ->
 }
 
 fn doctor(run: &RunOptions) -> Result<()> {
+    let hwaccels = detect_hwaccels();
     let checks = vec![
         (
             "ffmpeg",
@@ -642,7 +709,7 @@ fn doctor(run: &RunOptions) -> Result<()> {
     if run.json {
         println!(
             "{}",
-            serde_json::json!({ "checks": checks, "output_directory_writable": writable })
+            serde_json::json!({ "checks": checks, "output_directory_writable": writable, "hardware_acceleration": hwaccels })
         );
     } else {
         println!("{}", style("Forge doctor").bold());
@@ -664,10 +731,27 @@ fn doctor(run: &RunOptions) -> Result<()> {
             },
             run.output_root
         );
-        println!(
-            "{:<18} {}",
-            "hardware accel", "detected through ffmpeg build flags; see `ffmpeg -hwaccels`"
-        );
+        let hw = if hwaccels.is_empty() {
+            "none reported by ffmpeg".to_string()
+        } else {
+            hwaccels.join(", ")
+        };
+        println!("{:<18} {}", "hardware accel", hw);
     }
     Ok(())
+}
+
+fn detect_hwaccels() -> Vec<String> {
+    let Ok(output) = forge_core::CommandSpec::new("ffmpeg")
+        .arg("-hwaccels")
+        .run()
+    else {
+        return Vec::new();
+    };
+    String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty() && *line != "Hardware acceleration methods:")
+        .map(ToOwned::to_owned)
+        .collect()
 }

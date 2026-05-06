@@ -312,6 +312,7 @@ name = "forge-report"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "camino",
  "forge-core",
  "serde_json",
 ]
