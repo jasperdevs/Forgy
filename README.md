@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/jasperdevs/Forgy/actions/workflows/ci.yml/badge.svg)](https://github.com/jasperdevs/Forgy/actions/workflows/ci.yml)
 
-![Forgy imagegen logo](assets/logo-imagegen.png)
+![Forgy logo](assets/logo.svg)
 
 Forge is a beautiful, fast, terminal-native media toolkit.
 
@@ -85,7 +85,7 @@ forge preset show tiktok
 forge resize video.mp4 --preset youtube-short
 ```
 
-Built-ins: `tiktok`, `reels`, `youtube`, `youtube-short`, `podcast`, `lecture`, `discord`, `web`, `archive`.
+Built-ins: `tiktok`, `reels`, `social`, `youtube`, `youtube-short`, `podcast`, `lecture`, `discord`, `web`, `archive`.
 
 ## Transcription and notes
 
@@ -127,9 +127,17 @@ cargo test
 forge doctor
 ```
 
+For the real media smoke suite and measured backend comparisons:
+
+```powershell
+scripts/verify-e2e.ps1 -Network
+scripts/benchmark-real-ops.ps1 -Network
+```
+
 See [docs/design-notes.md](docs/design-notes.md), [docs/presets.md](docs/presets.md), and [docs/roadmap.md](docs/roadmap.md).
 
 Additional project notes:
 
 - [Competitor comparison](docs/comparison.md)
 - [Performance checks](docs/performance.md)
+- [Real operation benchmarks](docs/benchmark-results.md)

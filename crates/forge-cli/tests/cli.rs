@@ -24,6 +24,8 @@ fn make_sample(dir: &Path) -> PathBuf {
     let status = Command::new("ffmpeg")
         .args([
             "-hide_banner",
+            "-v",
+            "error",
             "-y",
             "-f",
             "lavfi",
@@ -69,6 +71,8 @@ fn transcribe_and_notes_write_reports() {
     let status = Command::new("ffmpeg")
         .args([
             "-hide_banner",
+            "-v",
+            "error",
             "-y",
             "-f",
             "lavfi",

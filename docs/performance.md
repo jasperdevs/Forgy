@@ -23,3 +23,11 @@ scripts/benchmark.ps1
 ```
 
 The script builds release and measures `forge`, `ffmpeg`, and `yt-dlp` startup paths when those tools are available.
+
+For real media operations, run:
+
+```powershell
+scripts/benchmark-real-ops.ps1 -Network
+```
+
+That benchmark generates fixture media and compares Forgy commands against direct `ffmpeg`, `ffprobe`, and `yt-dlp` backend commands. Latest local results are in [benchmark-results.md](benchmark-results.md).

@@ -6,6 +6,7 @@ Built-ins:
 
 - `tiktok` - 1080x1920 vertical MP4, h264/aac, creator captions in mind.
 - `reels` - 1080x1920 vertical MP4 for Instagram Reels.
+- `social` - general 1080x1920 vertical export for short-form clips.
 - `youtube` - 1920x1080 h264/aac MP4 with quality-biased defaults.
 - `youtube-short` - vertical YouTube Shorts export.
 - `podcast` - spoken-word MP3 defaults.

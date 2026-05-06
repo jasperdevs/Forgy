@@ -255,8 +255,14 @@ pub fn plan_clip(
             "-af".to_string(),
             "silenceremove=start_periods=1:start_threshold=-45dB:detection=peak".to_string(),
         ]);
+        args.extend(
+            ["-c:v", "copy", "-c:a", "aac"]
+                .into_iter()
+                .map(String::from),
+        );
+    } else {
+        args.extend(["-c", "copy"].into_iter().map(String::from));
     }
-    args.extend(["-c", "copy"].into_iter().map(String::from));
     args.push(output.to_string());
     let mut plan = JobPlan::new("clip", job_dir);
     plan.operations.push(format!("clip {}", request.input));
@@ -361,9 +367,18 @@ pub fn plan_thumbnail(
     args.extend(["-i".to_string(), request.input.to_string()]);
     if grid {
         args.extend(
-            ["-vf", "fps=1/10,scale=320:-1,tile=3x3", "-frames:v", "1"]
-                .into_iter()
-                .map(String::from),
+            [
+                "-vf",
+                "fps=1,scale=320:-1,tile=3x3",
+                "-frames:v",
+                "1",
+                "-q:v",
+                "2",
+                "-pix_fmt",
+                "yuvj420p",
+            ]
+            .into_iter()
+            .map(String::from),
         );
     } else {
         args.extend(

@@ -41,6 +41,21 @@ pub fn builtins() -> Vec<Preset> {
             notes: &["Matches tiktok defaults", "Faststart MP4"],
         },
         Preset {
+            name: "social",
+            description: "General vertical social export.",
+            video_codec: "libx264",
+            audio_codec: "aac",
+            container: "mp4",
+            width: Some(1080),
+            height: Some(1920),
+            aspect: Some("9:16"),
+            crf: 23,
+            notes: &[
+                "Alias-friendly creator preset",
+                "Works for short-form video",
+            ],
+        },
+        Preset {
             name: "youtube",
             description: "Standard YouTube upload.",
             video_codec: "libx264",

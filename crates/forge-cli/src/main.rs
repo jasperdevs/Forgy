@@ -178,6 +178,11 @@ struct YoutubeArgs {
     metadata: bool,
     #[arg(long)]
     archive: bool,
+    #[arg(
+        long,
+        help = "Ask yt-dlp to extract metadata without downloading media."
+    )]
+    simulate: bool,
 }
 
 #[derive(Args)]
@@ -282,12 +287,32 @@ fn dispatch(command: Commands, run: RunOptions, cancelled: Arc<AtomicBool>) -> R
             width,
             height,
             preset,
-        } => run_plan(
-            forge_media::plan_resize(req(&input, &run), width, height, preset.as_deref())?,
-            vec![input],
-            &run,
-            cancelled,
-        ),
+        } => {
+            if input.is_dir() {
+                let files = forge_batch::collect_media(input.as_str(), true)?;
+                for file in files {
+                    run_plan(
+                        forge_media::plan_resize(
+                            req(&file, &run),
+                            width,
+                            height,
+                            preset.as_deref(),
+                        )?,
+                        vec![file],
+                        &run,
+                        cancelled.clone(),
+                    )?;
+                }
+                Ok(())
+            } else {
+                run_plan(
+                    forge_media::plan_resize(req(&input, &run), width, height, preset.as_deref())?,
+                    vec![input],
+                    &run,
+                    cancelled,
+                )
+            }
+        }
         Commands::Crop { input, aspect } => run_plan(
             forge_media::plan_crop(req(&input, &run), &aspect)?,
             vec![input],
@@ -472,7 +497,7 @@ fn captions(args: CaptionsArgs, run: &RunOptions, cancelled: Arc<AtomicBool>) ->
         args.input.extension().unwrap_or("mp4"),
     )?;
     let subtitle_filter = if args.burn {
-        format!("subtitles={}", source.as_str().replace('\\', "/"))
+        format!("subtitles='{}'", ffmpeg_filter_path(&source))
     } else {
         String::new()
     };
@@ -575,6 +600,9 @@ fn youtube(args: YoutubeArgs, run: &RunOptions, cancelled: Arc<AtomicBool>) -> R
     }
     if args.archive {
         cmd = cmd.args(["--download-archive", job_dir.join("archive.txt").as_str()]);
+    }
+    if args.simulate {
+        cmd = cmd.arg("--simulate");
     }
     cmd = cmd.arg(args.url);
     let mut plan = JobPlan::new("youtube", job_dir);
@@ -762,4 +790,11 @@ fn detect_hwaccels() -> Vec<String> {
         .filter(|line| !line.is_empty() && *line != "Hardware acceleration methods:")
         .map(ToOwned::to_owned)
         .collect()
+}
+
+fn ffmpeg_filter_path(path: &Utf8Path) -> String {
+    path.as_str()
+        .replace('\\', "/")
+        .replace(':', "\\:")
+        .replace('\'', "\\'")
 }
