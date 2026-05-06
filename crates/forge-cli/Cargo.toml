@@ -1,0 +1,30 @@
+[package]
+name = "forge-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+camino.workspace = true
+chrono.workspace = true
+clap.workspace = true
+console.workspace = true
+ctrlc.workspace = true
+indicatif.workspace = true
+owo-colors.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+forge-core = { path = "../forge-core" }
+forge-media = { path = "../forge-media" }
+forge-presets = { path = "../forge-presets" }
+forge-transcribe = { path = "../forge-transcribe" }
+forge-batch = { path = "../forge-batch" }
+forge-report = { path = "../forge-report" }
+
+[[bin]]
+name = "forge"
+path = "src/main.rs"

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Forgy logo</title>
+  <desc id="desc">A simple flat anvil prompt mark for the Forge CLI.</desc>
+  <rect width="256" height="256" rx="44" fill="#f5f2ea"/>
+  <path fill="#1f2328" d="M54 78h108c19 0 34 15 34 34v6h26v30h-56l-24 30H88l-24-30H34v-30h108v-10H54V78z"/>
+  <path fill="#e86a2c" d="M83 105l35 23-35 23v-20l17-3-17-3v-20zM184 50h18v18h-18z"/>
+</svg>
