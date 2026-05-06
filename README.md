@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/jasperdevs/Forgy/actions/workflows/ci.yml/badge.svg)](https://github.com/jasperdevs/Forgy/actions/workflows/ci.yml)
 
-![Forgy logo](assets/logo.svg)
+![Forgy imagegen logo](assets/logo-imagegen.png)
 
 Forge is a beautiful, fast, terminal-native media toolkit.
 
