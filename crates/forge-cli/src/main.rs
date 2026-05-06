@@ -18,6 +18,7 @@ use forge_core::{ForgeReport, JobPlan, RunOptions, dir_size};
 use forge_media::PlanRequest;
 use forge_transcribe::{MockProvider, NotesProvider, NotesRequest, TranscriptionProvider};
 use indicatif::{ProgressBar, ProgressStyle};
+use serde::Serialize;
 use tracing_subscriber::EnvFilter;
 
 #[derive(Parser)]
@@ -203,6 +204,13 @@ enum PresetCommand {
     List,
     Show { name: String },
     Create { name: String },
+}
+
+#[derive(Debug, Serialize)]
+struct DoctorCheck {
+    name: &'static str,
+    ok: bool,
+    note: &'static str,
 }
 
 fn main() -> Result<()> {
@@ -500,7 +508,7 @@ fn transcribe(input: Utf8PathBuf, srt: bool, recursive: bool, run: &RunOptions) 
     let job_dir = forge_core::prepare_job_dir(Path::new(run.output_root.as_str()), "transcribe")?;
     let mut outputs = Vec::new();
     for file in &files {
-        let transcript = provider.transcribe(&file, srt)?;
+        let transcript = provider.transcribe(file, srt)?;
         let stem = file.file_stem().unwrap_or("transcript");
         let txt = job_dir.join(format!("{stem}.txt"));
         fs::write(&txt, transcript.text)?;
@@ -684,26 +692,26 @@ fn notes(input: Utf8PathBuf, chapters: bool, summary: bool, run: &RunOptions) ->
 fn doctor(run: &RunOptions) -> Result<()> {
     let hwaccels = detect_hwaccels();
     let checks = vec![
-        (
-            "ffmpeg",
-            forge_media::tool_available("ffmpeg"),
-            "required for media operations",
-        ),
-        (
-            "ffprobe",
-            forge_media::tool_available("ffprobe"),
-            "required for inspect",
-        ),
-        (
-            "yt-dlp",
-            forge_media::tool_available("yt-dlp"),
-            "optional for forge youtube",
-        ),
-        (
-            "whisper provider",
-            forge_transcribe::WhisperCppProvider.available(),
-            "optional local transcription",
-        ),
+        DoctorCheck {
+            name: "ffmpeg",
+            ok: forge_media::tool_available("ffmpeg"),
+            note: "required for media operations",
+        },
+        DoctorCheck {
+            name: "ffprobe",
+            ok: forge_media::tool_available("ffprobe"),
+            note: "required for inspect",
+        },
+        DoctorCheck {
+            name: "yt-dlp",
+            ok: forge_media::tool_available("yt-dlp"),
+            note: "optional for forge youtube",
+        },
+        DoctorCheck {
+            name: "whisper provider",
+            ok: forge_transcribe::WhisperCppProvider.available(),
+            note: "optional local transcription",
+        },
     ];
     let writable = fs::create_dir_all(&run.output_root).is_ok();
     if run.json {
@@ -713,13 +721,13 @@ fn doctor(run: &RunOptions) -> Result<()> {
         );
     } else {
         println!("{}", style("Forge doctor").bold());
-        for (name, ok, note) in checks {
-            let mark = if ok {
+        for check in checks {
+            let mark = if check.ok {
                 style("ok").green()
             } else {
                 style("missing").red()
             };
-            println!("{:<18} {:<8} {}", name, mark, note);
+            println!("{:<18} {:<8} {}", check.name, mark, check.note);
         }
         println!(
             "{:<18} {:<8} {}",

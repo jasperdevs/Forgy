@@ -70,13 +70,13 @@ pub fn inspect_path(path: &Utf8Path) -> Result<MediaInfo> {
                 if let Some(codec) = stream.get("codec_name").and_then(Value::as_str) {
                     video_codecs.push(codec.to_string());
                 }
-                if resolution.is_none() {
-                    if let (Some(w), Some(h)) = (
+                if resolution.is_none()
+                    && let (Some(w), Some(h)) = (
                         stream.get("width").and_then(Value::as_u64),
                         stream.get("height").and_then(Value::as_u64),
-                    ) {
-                        resolution = Some(format!("{w}x{h}"));
-                    }
+                    )
+                {
+                    resolution = Some(format!("{w}x{h}"));
                 }
             }
             Some("audio") => {
@@ -219,9 +219,8 @@ pub fn plan_compress(
     args.push(output.to_string());
     let mut plan = JobPlan::new("compress", job_dir);
     plan.operations.push(format!("compress {}", request.input));
-    if target.is_some() {
-        plan.operations
-            .push(format!("target size {}", target.unwrap()));
+    if let Some(target) = target {
+        plan.operations.push(format!("target size {target}"));
     }
     plan.outputs.push(output);
     plan.commands.push(CommandSpec::new("ffmpeg").args(args));
@@ -479,10 +478,10 @@ fn parse_range(
     to: Option<&str>,
     range: Option<&str>,
 ) -> (Option<String>, Option<String>) {
-    if let Some(range) = range {
-        if let Some((a, b)) = range.split_once("..") {
-            return (Some(a.to_string()), Some(b.to_string()));
-        }
+    if let Some(range) = range
+        && let Some((a, b)) = range.split_once("..")
+    {
+        return (Some(a.to_string()), Some(b.to_string()));
     }
     (from.map(ToOwned::to_owned), to.map(ToOwned::to_owned))
 }

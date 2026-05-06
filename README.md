@@ -128,3 +128,8 @@ forge doctor
 ```
 
 See [docs/design-notes.md](docs/design-notes.md), [docs/presets.md](docs/presets.md), and [docs/roadmap.md](docs/roadmap.md).
+
+Additional project notes:
+
+- [Competitor comparison](docs/comparison.md)
+- [Performance checks](docs/performance.md)
