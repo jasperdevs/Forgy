@@ -168,7 +168,7 @@ cargo test --workspace
 cargo build --release --workspace
 ```
 
-CI runs format, build, clippy, tests, and a release build on `main`.
+CI runs format, build, clippy, tests, a release build, and the local real-media E2E suite on `main`.
 
 ## License
 

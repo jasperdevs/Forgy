@@ -23,3 +23,6 @@ jobs:
         run: cargo test --workspace
       - name: Release build
         run: cargo build --release --workspace
+      - name: Real media E2E
+        shell: pwsh
+        run: ./scripts/verify-e2e.ps1

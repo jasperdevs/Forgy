@@ -6,7 +6,8 @@ $ErrorActionPreference = "Stop"
 $PSNativeCommandUseErrorActionPreference = $true
 
 $Root = Split-Path -Parent $PSScriptRoot
-$Forge = Join-Path $Root "target\release\forge.exe"
+$ForgeName = if ($env:OS -eq "Windows_NT") { "forge.exe" } else { "forge" }
+$Forge = Join-Path $Root "target\release\$ForgeName"
 $Work = Join-Path $Root "target\bench-real"
 $Fixtures = Join-Path $Work "fixtures"
 $Out = Join-Path $Work "out"
